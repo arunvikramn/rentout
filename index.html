@@ -218,7 +218,8 @@
   }
   .btn:active { transform: scale(0.98); }
   .btn-primary { background: var(--blue); color: #000; }
-  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-success { background: var(--green); color: #000; }
+  .btn-primary:disabled, .btn-success:disabled { opacity: 0.35; cursor: not-allowed; }
   .btn-ghost   { background: var(--border); color: var(--muted); }
 
   /* ── BILLS ── */
@@ -485,7 +486,7 @@ function renderStatus(d) {
       
     if (isOwner) {
       actionHtml += `
-        <button class="btn btn-primary" style="margin-top:14px" onclick="verifyRentPaid()">Approve Payment</button>
+        <button class="btn btn-success" style="margin-top:14px" onclick="verifyRentPaid()">Approve Payment</button>
       `;
     } else {
       actionHtml += `
