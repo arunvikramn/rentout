@@ -30,7 +30,7 @@
 
 1. In your Google Sheet: **Extensions → Apps Script**
 2. Delete all default content in `Code.gs`
-3. Paste the entire content of `apps-script/Code.gs`
+3. Paste the entire content of `config.gs`
 4. Edit the **CONFIG** section at the top:
    ```js
    UNITS: {

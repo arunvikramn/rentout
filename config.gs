@@ -585,8 +585,8 @@ function setupSheets() {
   });
 
   const unitSheet = ss.getSheetByName('units');
-  unitSheet.appendRow(['ground', 'Ground Floor', '', 0, 5, 1000, '']);
-  unitSheet.appendRow(['first',  'First Floor',  '', 0, 5, 1000, '']);
+  unitSheet.appendRow(['ground', 'Ground Floor', '2026-04-01', 11000, 5, 1000, '']);
+  unitSheet.appendRow(['first',  'First Floor',  '2026-04-01', 12000, 5, 1000, '']);
 
   createMonthlyLedgerRows(currentMonth());
 
