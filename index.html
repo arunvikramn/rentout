@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Rent Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── CONFIG: set your Apps Script URL ──────────────────────── */
+  /* Paste APPS_SCRIPT_URL in the <script> block at bottom       */
+
+  :root {
+    --bg:       #0f0f10;
+    --surface:  #181819;
+    --border:   #2a2a2d;
+    --text:     #e8e8ea;
+    --muted:    #6b6b72;
+    --green:    #34d399;
+    --green-dim:#0d3d2a;
+    --amber:    #fbbf24;
+    --amber-dim:#3d2c00;
+    --red:      #f87171;
+    --red-dim:  #3d1010;
+    --blue:     #60a5fa;
+    --blue-dim: #0d2040;
+    --mono:     'DM Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100dvh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 20px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  #month-badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+  }
+
+  /* ── UNIT SELECTOR ── */
+  .unit-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 24px 20px 0;
+  }
+  .unit-tab {
+    flex: 1;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .unit-tab:hover { border-color: #444; color: var(--text); }
+  .unit-tab.active {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: var(--blue-dim);
+  }
+
+  /* ── MAIN CARD AREA ── */
+  main { padding: 16px 20px 40px; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 24px 0 10px;
+  }
+
+  /* ── STATUS ROW ── */
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .status-card + .status-card { margin-top: 10px; }
+
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .status-label { font-size: 14px; color: var(--text); }
+  .status-label small { display: block; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
+  .badge-green  { background: var(--green-dim);  color: var(--green); }
+  .badge-amber  { background: var(--amber-dim);  color: var(--amber); }
+  .badge-red    { background: var(--red-dim);    color: var(--red);   }
+  .badge-muted  { background: var(--border);     color: var(--muted); }
+
+  .amount {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    margin: 4px 0 0;
+  }
+  .amount .currency { font-size: 14px; color: var(--muted); }
+
+  .late-fee-row {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--red);
+  }
+
+  .remarks-box {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .remarks-box strong { color: var(--text); font-size: 11px; font-family: var(--mono); letter-spacing: 0.08em; }
+
+  /* ── ACTION FORM ── */
+  .action-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 10px;
+  }
+
+  label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"], textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input[type="text"]:focus, textarea:focus { border-color: var(--blue); }
+  textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+
+  .field + .field { margin-top: 12px; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--blue); color: #000; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-ghost   { background: var(--border); color: var(--muted); }
+
+  /* ── BILLS ── */
+  .bill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    gap: 10px;
+  }
+  .bill-item + .bill-item { margin-top: 8px; }
+  .bill-type {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .bill-amount {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text);
+    margin-top: 2px;
+  }
+  .bill-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .btn-small {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-small:hover { border-color: var(--green); color: var(--green); }
+  .btn-small.paid-btn { border-color: var(--green-dim); color: var(--green); background: var(--green-dim); cursor: default; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+    z-index: 100;
+    white-space: nowrap;
+    max-width: 90vw;
+    text-align: center;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.ok  { border-color: var(--green); color: var(--green); }
+  #toast.err { border-color: var(--red);   color: var(--red);   }
+
+  /* ── LOADING ── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .needs-review-note {
+    font-size: 12px;
+    color: var(--amber);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  /* ── MODAL (bill pay) ── */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: flex-end;
+    z-index: 200;
+    padding: 20px;
+  }
+  .modal-backdrop.hidden { display: none; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .modal h3 {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Rent Portal</div>
+  <div id="month-badge">—</div>
+</header>
+
+<div class="unit-tabs">
+  <button class="unit-tab active" onclick="selectUnit('ground')" id="tab-ground">Ground</button>
+  <button class="unit-tab"       onclick="selectUnit('first')"  id="tab-first">First Floor</button>
+</div>
+
+<main id="main-area">
+  <div class="loading-state"><span class="spinner"></span><br><br>Loading...</div>
+</main>
+
+<!-- Bill pay modal -->
+<div class="modal-backdrop hidden" id="bill-modal">
+  <div class="modal">
+    <h3 id="modal-title">Mark bill paid</h3>
+    <div class="field">
+      <label>Remarks (optional)</label>
+      <textarea id="modal-remarks" placeholder="e.g. paid via PhonePe on 5th"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="submitBillPaid()">Confirm paid</button>
+    <button class="btn btn-ghost" onclick="closeModal()" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONFIGURATION ──────────────────────────────────────────────
+// 1. Deploy your Apps Script as a Web App
+// 2. Paste the URL below (keep the quotes)
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiP4CI68H9H97ROtdjTPGCiwlrnYLcIy7e2Mo7xO6o0-lulqS8AMSMC-9z3GALwNcXqw/exec';
+// ──────────────────────────────────────────────────────────────
+
+let currentUnit = 'ground';
+let currentData = null;
+let pendingBill  = null;
+
+// ── INIT ──
+async function init() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('unit')) currentUnit = params.get('unit');
+  updateTabs();
+  await loadStatus();
+}
+
+function selectUnit(unit) {
+  currentUnit = unit;
+  updateTabs();
+  loadStatus();
+}
+
+function updateTabs() {
+  document.querySelectorAll('.unit-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + currentUnit).classList.add('active');
+}
+
+// ── API ──
+async function api(params) {
+  const url = APPS_SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url);
+  return res.json();
+}
+
+// ── LOAD STATUS ──
+async function loadStatus() {
+  document.getElementById('main-area').innerHTML =
+    '<div class="loading-state"><span class="spinner"></span><br><br>Loading...</div>';
+
+  const data = await api({ action: 'status', unit: currentUnit });
+  currentData = data;
+
+  if (data.error) {
+    document.getElementById('main-area').innerHTML =
+      `<div class="loading-state" style="color:var(--red)">${data.error}</div>`;
+    return;
+  }
+
+  document.getElementById('month-badge').textContent = data.month;
+  renderStatus(data);
+}
+
+// ── RENDER ──
+function renderStatus(d) {
+  const r = d.rent;
+  const lateFeeHtml = r.late_fee > 0 ? `
+    <div class="late-fee-row">
+      <span>late fee</span>
+      <span>+ ₹${r.late_fee.toLocaleString('en-IN')}</span>
+    </div>` : '';
+
+  const ownerRemarksHtml = r.owner_remarks ? `
+    <div class="remarks-box" style="border-color:var(--amber-dim)">
+      <strong>Owner note</strong><br>${esc(r.owner_remarks)}
+    </div>` : '';
+
+  let rentStatus, rentBadge;
+  if (r.verified) {
+    rentStatus = 'badge-green'; rentBadge = '✓ Verified';
+  } else if (r.paid) {
+    rentStatus = 'badge-amber'; rentBadge = 'Awaiting verify';
+  } else {
+    rentStatus = 'badge-red'; rentBadge = 'Unpaid';
+  }
+
+  // Rent action block
+  let actionHtml = '';
+  if (!r.paid) {
+    actionHtml = `
+      <p class="section-label">Mark rent paid</p>
+      <div class="action-card">
+        <div class="field">
+          <label>UTR / Transaction ID *</label>
+          <input type="text" id="utr-input" placeholder="12-digit UTR or UPI ref" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label>Remarks (optional)</label>
+          <input type="text" id="remarks-input" placeholder="e.g. paid via NEFT">
+        </div>
+        <button class="btn btn-primary" onclick="submitRentPaid()">Mark as Paid</button>
+      </div>`;
+  } else if (r.paid && !r.verified) {
+    actionHtml = `
+      <div class="remarks-box" style="margin-top:10px">
+        <strong>UTR</strong><br>${esc(r.utr)}<br>
+        ${r.remarks ? `<strong style="margin-top:6px;display:block">Your note</strong><br>${esc(r.remarks)}` : ''}
+      </div>
+      <p style="margin-top:14px;font-size:13px;color:var(--muted);font-family:var(--mono)">
+        Waiting for owner to verify. You'll see ✓ here once cleared.
+      </p>`;
+  }
+
+  // Bills
+  const billsHtml = d.bills.length === 0
+    ? `<p style="font-size:13px;color:var(--muted);font-family:var(--mono);padding:14px 0">No bills for this month yet.</p>`
+    : d.bills.map(b => {
+        const reviewNote = b.needs_review
+          ? `<div class="needs-review-note">⚠ auto-parse issue — check amount</div>` : '';
+        const payBtn = b.paid
+          ? `<span class="badge badge-green">Paid</span>`
+          : `<button class="btn-small" onclick="openBillModal('${b.id}','${b.type}')">Mark paid</button>`;
+        return `
+          <div class="bill-item">
+            <div>
+              <div class="bill-type">${b.type}</div>
+              <div class="bill-amount">₹${Number(b.amount).toLocaleString('en-IN')}</div>
+              ${b.due_date ? `<div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">due ${b.due_date}</div>` : ''}
+              ${reviewNote}
+              ${b.paid_remarks ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${esc(b.paid_remarks)}</div>` : ''}
+            </div>
+            <div class="bill-actions">${payBtn}</div>
+          </div>`;
+      }).join('');
+
+  document.getElementById('main-area').innerHTML = `
+    <p class="section-label">Rent — ${d.month}</p>
+    <div class="status-card">
+      <div class="status-row">
+        <div class="status-label">
+          ${esc(d.unit_name)}
+          <small>Monthly rent</small>
+        </div>
+        <span class="badge ${rentStatus}">${rentBadge}</span>
+      </div>
+      <div class="amount"><span class="currency">₹</span>${Number(r.due).toLocaleString('en-IN')}</div>
+      ${lateFeeHtml}
+      ${ownerRemarksHtml}
+    </div>
+    ${actionHtml}
+    <p class="section-label">Bills</p>
+    ${billsHtml}
+  `;
+}
+
+// ── SUBMIT RENT PAID ──
+async function submitRentPaid() {
+  const utr = document.getElementById('utr-input').value.trim();
+  const remarks = document.getElementById('remarks-input')?.value.trim() || '';
+  if (!utr) { toast('Enter a UTR / transaction ID', 'err'); return; }
+
+  const btn = document.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  const res = await api({ action: 'markPaid', unit: currentUnit, utr, remarks });
+  btn.disabled = false;
+
+  if (res.success) {
+    toast('Recorded! Awaiting verification.', 'ok');
+    setTimeout(loadStatus, 1200);
+  } else {
+    btn.textContent = 'Mark as Paid';
+    toast(res.error || 'Something went wrong', 'err');
+  }
+}
+
+// ── BILL MODAL ──
+function openBillModal(billId, type) {
+  pendingBill = { billId, type };
+  document.getElementById('modal-title').textContent = `Mark ${type} bill paid`;
+  document.getElementById('modal-remarks').value = '';
+  document.getElementById('bill-modal').classList.remove('hidden');
+}
+function closeModal() {
+  document.getElementById('bill-modal').classList.add('hidden');
+  pendingBill = null;
+}
+async function submitBillPaid() {
+  if (!pendingBill) return;
+  const remarks = document.getElementById('modal-remarks').value.trim();
+  const res = await api({ action: 'markBillPaid', unit: currentUnit, billId: pendingBill.billId, type: pendingBill.type, remarks });
+  closeModal();
+  if (res.success) { toast('Bill marked paid', 'ok'); setTimeout(loadStatus, 800); }
+  else toast(res.error || 'Error', 'err');
+}
+
+// ── TOAST ──
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+// ── ESC ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+window.addEventListener('click', e => {
+  if (e.target.id === 'bill-modal') closeModal();
+});
+
+init();
+</script>
+</body>
+</html>
