@@ -351,7 +351,7 @@
   <div id="month-badge">—</div>
 </header>
 
-<div class="unit-tabs">
+<div class="unit-tabs" id="unit-selector">
   <button class="unit-tab active" onclick="selectUnit('ground')" id="tab-ground">Ground</button>
   <button class="unit-tab"       onclick="selectUnit('first')"  id="tab-first">First Floor</button>
 </div>
@@ -389,7 +389,11 @@ let pendingBill  = null;
 // ── INIT ──
 async function init() {
   const params = new URLSearchParams(location.search);
-  if (params.get('unit')) currentUnit = params.get('unit');
+  const u = params.get('unit');
+  if (u === 'ground' || u === 'first') {
+    currentUnit = u;
+    document.getElementById('unit-selector').style.display = 'none';
+  }
   updateTabs();
   await loadStatus();
 }
