@@ -385,10 +385,13 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiP4CI68H9H97R
 let currentUnit = 'ground';
 let currentData = null;
 let pendingBill  = null;
+let isOwner = false;
 
 // ── INIT ──
 async function init() {
   const params = new URLSearchParams(location.search);
+  if (params.get('view') === 'owner' || params.get('owner') === '1') isOwner = true;
+  
   const u = params.get('unit');
   if (u === 'ground' || u === 'first') {
     currentUnit = u;
@@ -477,11 +480,19 @@ function renderStatus(d) {
     actionHtml = `
       <div class="remarks-box" style="margin-top:10px">
         <strong>UTR</strong><br>${esc(r.utr)}<br>
-        ${r.remarks ? `<strong style="margin-top:6px;display:block">Your note</strong><br>${esc(r.remarks)}` : ''}
-      </div>
-      <p style="margin-top:14px;font-size:13px;color:var(--muted);font-family:var(--mono)">
-        Waiting for owner to verify. You'll see ✓ here once cleared.
-      </p>`;
+        ${r.remarks ? `<strong style="margin-top:6px;display:block">Note</strong><br>${esc(r.remarks)}` : ''}
+      </div>`;
+      
+    if (isOwner) {
+      actionHtml += `
+        <button class="btn btn-primary" style="margin-top:14px" onclick="verifyRentPaid()">Approve Payment</button>
+      `;
+    } else {
+      actionHtml += `
+        <p style="margin-top:14px;font-size:13px;color:var(--muted);font-family:var(--mono)">
+          Waiting for owner to verify. You'll see ✓ here once cleared.
+        </p>`;
+    }
   }
 
   // Bills
@@ -544,6 +555,24 @@ async function submitRentPaid() {
     setTimeout(loadStatus, 1200);
   } else {
     btn.textContent = 'Mark as Paid';
+    toast(res.error || 'Something went wrong', 'err');
+  }
+}
+
+// ── VERIFY RENT PAID ──
+async function verifyRentPaid() {
+  const btn = document.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  const res = await api({ action: 'verify', unit: currentUnit });
+  btn.disabled = false;
+
+  if (res.success) {
+    toast('Payment approved!', 'ok');
+    setTimeout(loadStatus, 1200);
+  } else {
+    btn.textContent = 'Approve Payment';
     toast(res.error || 'Something went wrong', 'err');
   }
 }

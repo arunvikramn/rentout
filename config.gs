@@ -99,9 +99,9 @@ function getStatus(unit) {
   if (!unit) return { error: 'unit required' };
   const month = currentMonth();
 
-  const ledger = sheetData('ledger').filter(r => r.unit_id === unit && r.month === month);
-  const bills  = sheetData('bills').filter(r  => r.unit_id === unit && r.month === month);
-  const units  = sheetData('units').find(r => r.unit_id === unit);
+  const ledger = sheetData('ledger').filter(r => String(r.unit_id) === String(unit) && String(r.month) === String(month));
+  const bills  = sheetData('bills').filter(r  => String(r.unit_id) === String(unit) && String(r.month) === String(month));
+  const units  = sheetData('units').find(r => String(r.unit_id) === String(unit));
 
   const ledgerRow = ledger[0] || {};
 

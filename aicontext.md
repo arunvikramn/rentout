@@ -1,24 +1,35 @@
 # Project Context — Rent Tracker
 
-## Infrastructure
-- **GitHub Repository**: `https://github.com/arunvikramn/rentout`
-- **Google Sheet ID**: `1DX7AXCFs0-MjLcAImLxWP_Nau936Ry5dMDDgPrrZVkU`
-- **Google Apps Script ID**: `1EWkEQ-oLqolkU1mjgKj9fhNw0wd5AElgdo1k2DSTUM38gMPs4d_sG2WK`
-- **Web App URL**: `https://script.google.com/macros/s/AKfycbyiP4CI68H9H97ROtdjTPGCiwlrnYLcIy7e2Mo7xO6o0-lulqS8AMSMC-9z3GALwNcXqw/exec`
+## 1. Infrastructure
+- **GitHub**: [arunvikramn/rentout](https://github.com/arunvikramn/rentout)
+- **Sheet ID**: `1DX7AXCFs0-MjLcAImLxWP_Nau936Ry5dMDDgPrrZVkU`
+- **Script ID**: `1EWkEQ-oLqolkU1mjgKj9fhNw0wd5AElgdo1k2DSTUM38gMPs4d_sG2WK`
+- **Live URL**: [Web App](https://script.google.com/macros/s/AKfycbyiP4CI68H9H97ROtdjTPGCiwlrnYLcIy7e2Mo7xO6o0-lulqS8AMSMC-9z3GALwNcXqw/exec)
 
-## Local Setup
-- **Clasp Config**: `.clasp.json` (root)
-- **Primary Script**: `config.gs`
-- **Tenant UI**: `index.html`
+## 2. Technical Specs
+- **Backend**: `config.gs` (Google Apps Script)
+- **Frontend**: `index.html` (Single-page app)
+- **Tooling**: `clasp` for local development & deployment.
+- **Manifest**: `appsscript.json` (defines access & execution context).
 
-## Commands
-- **Sync to GAS**: `clasp push`
-- **Fetch from GAS**: `clasp pull`
-- **Deploy/Push to GitHub**: `git add . ; git commit -m "update" ; git push`
+## 3. Operations & Workflows
+| Task | Command |
+| :--- | :--- |
+| **Sync local to GAS** | `clasp push -f` |
+| **Update Live App** | `clasp deploy -i AKfycbyiP4CI68H9H97ROtdjTPGCiwlrnYLcIy7e2Mo7xO6o0-lulqS8AMSMC-9z3GALwNcXqw` |
+| **Save to GitHub** | `git add . ; git commit -m "update" ; git push` |
+| **One-Click Deploy** | `clasp push -f ; clasp deploy -i AKfycbyiP4CI68H9H97ROtdjTPGCiwlrnYLcIy7e2Mo7xO6o0-lulqS8AMSMC-9z3GALwNcXqw ; git push` |
 
-## Sheet Data (Initial)
-| unit_id | unit_name | start_date | base_rent | escalation_pct | escalation_min_flat |
-|---|---|---|---|---|---|
-| ground | Ground Floor | 2026-04-01 | 11000 | 5 | 1000 |
-| first | First Floor | 2026-04-01 | 12000 | 5 | 1000 |
+## 4. Business Rules
+- **Units**: Ground (₹11,000), First (₹12,000).
+- **Escalation**: 5% or ₹1,000 min annually.
+- **Late Fee**: ₹100/day after 3-day grace.
+- **Roles**: 
+  - **Tenant**: Access via `?unit=ground` or `?unit=first`.
+  - **Owner**: Access via `?view=owner` (allows payment verification).
+
+## 5. Critical Knowledge
+- **Anonymous Access**: Manifest must have `"access": "ANYONE_ANONYMOUS"`.
+- **Clasp Sync**: `index.html` requires `!index.html` in `.claspignore`.
+- **Execution Mode**: `USER_DEPLOYING` = "Execute as Me".
 

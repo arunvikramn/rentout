@@ -1,0 +1,10 @@
+# Ignore everything by default
+**/**
+
+# Whitelist GAS files
+!appsscript.json
+!config.gs
+!index.html
+
+# Explicitly ignore UI
+# index.html
