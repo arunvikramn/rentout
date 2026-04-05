@@ -80,9 +80,9 @@ function handleRequest(e) {
   try {
     switch (action) {
       case 'status':        result = getStatus(p.unit);            break;
-      case 'markPaid':      result = markPaid(p.unit, p.utr, p.remarks); break;
+      case 'markPaid':      result = markPaid(p.unit, p.id, p.utr, p.remarks); break;
       case 'markBillPaid':  result = markBillPaid(p.unit, p.billId, p.type, p.remarks); break;
-      case 'verify':        result = verifyPayment(p.unit, p.month); break;
+      case 'verify':        result = verifyPayment(p.unit, p.id); break;
       case 'ownerDash':     result = getOwnerDash();               break;
       default:              result = { error: 'Unknown action' };
     }
@@ -97,30 +97,37 @@ function handleRequest(e) {
 // ── STATUS (tenant view) ───────────────────────────────────────
 function getStatus(unit) {
   if (!unit) return { error: 'unit required' };
-  const month = currentMonth();
+  const currentM = currentMonth();
 
-  const ledger = sheetData('ledger').filter(r => String(r.unit_id) === String(unit) && String(r.month) === String(month));
-  const bills  = sheetData('bills').filter(r  => String(r.unit_id) === String(unit) && String(r.month) === String(month));
-  const units  = sheetData('units').find(r => String(r.unit_id) === String(unit));
+  const allLedgers = sheetData('ledger').filter(r => String(r.unit_id) === String(unit));
+  // Show all unverified months PLUS the current month
+  const activeLedgers = allLedgers.filter(r => r.verified_by_owner !== 'yes' || r.month === currentM);
 
-  const ledgerRow = ledger[0] || {};
+  const allBills = sheetData('bills').filter(r => String(r.unit_id) === String(unit));
+  // Show all unpaid bills PLUS the current month's bills
+  const activeBills = allBills.filter(r => r.paid !== 'yes' || r.month === currentM);
+
+  const units = sheetData('units').find(r => String(r.unit_id) === String(unit));
 
   return {
     unit,
     unit_name: CONFIG.UNITS[unit]?.name || unit,
-    month,
-    rent: {
-      due:           ledgerRow.rent_due || 0,
-      paid:          ledgerRow.rent_paid === 'yes',
-      paid_date:     ledgerRow.paid_date || '',
-      utr:           ledgerRow.utr || '',
-      remarks:       ledgerRow.tenant_remarks || '',
-      verified:      ledgerRow.verified_by_owner === 'yes',
-      owner_remarks: ledgerRow.owner_remarks || '',
-      late_fee:      ledgerRow.late_fee || 0
-    },
-    bills: bills.map(b => ({
+    month: currentM,
+    rents: activeLedgers.map(r => ({
+      id:            r.month_unit,
+      month:         r.month,
+      due:           r.rent_due || 0,
+      paid:          r.rent_paid === 'yes',
+      paid_date:     r.paid_date || '',
+      utr:           r.utr || '',
+      remarks:       r.tenant_remarks || '',
+      verified:      r.verified_by_owner === 'yes',
+      owner_remarks: r.owner_remarks || '',
+      late_fee:      r.late_fee || 0
+    })),
+    bills: activeBills.map(b => ({
       id:           b.bill_id,
+      month:        b.month,
       type:         b.type,
       amount:       b.amount,
       due_date:     b.due_date,
@@ -133,12 +140,11 @@ function getStatus(unit) {
 }
 
 // ── MARK RENT PAID (tenant) ────────────────────────────────────
-function markPaid(unit, utr, remarks) {
-  if (!unit || !utr) return { error: 'unit and UTR required' };
-  const month = currentMonth();
+function markPaid(unit, id, utr, remarks) {
+  if (!unit || !utr || !id) return { error: 'unit, id, and UTR required' };
 
   const updated = updateRow('ledger',
-    'month_unit', `${month}_${unit}`,
+    'month_unit', id,
     {
       rent_paid:      'yes',
       paid_date:      today(),
@@ -166,17 +172,16 @@ function markBillPaid(unit, billId, type, remarks) {
 }
 
 // ── VERIFY PAYMENT (owner) ─────────────────────────────────────
-function verifyPayment(unit, month) {
-  if (!unit) return { error: 'unit required' };
-  const m = month || currentMonth();
+function verifyPayment(unit, id) {
+  if (!unit || !id) return { error: 'unit and id required' };
 
   const updated = updateRow('ledger',
-    'month_unit', `${m}_${unit}`,
+    'month_unit', id,
     { verified_by_owner: 'yes', verified_date: today() }
   );
 
   return updated
-    ? { success: true, message: `Verified for ${unit} — ${m}` }
+    ? { success: true, message: `Verified` }
     : { error: 'Ledger row not found.' };
 }
 
@@ -204,10 +209,17 @@ function runNightlyLateFee() {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (get(row, 'month') !== month) continue;
-    if (get(row, 'rent_paid') === 'yes') { set(i, 'late_fee', 0); continue; }
+    
+    // Only calculate late fees for unverified rows
+    if (get(row, 'verified_by_owner') === 'yes') continue;
+    
+    // If paid, keep the existing late fee but stop increasing it
+    if (get(row, 'rent_paid') === 'yes') continue; 
 
-    const dueDate = new Date(month + '-01');
+    const rowMonth = get(row, 'month');
+    if (!rowMonth) continue;
+
+    const dueDate = new Date(rowMonth + '-01');
     const diffDays = Math.floor((today_ - dueDate) / (1000 * 60 * 60 * 24));
     const feeDays = Math.max(0, diffDays - CONFIG.LATE_FEE_GRACE_DAYS);
     const fee = feeDays * CONFIG.LATE_FEE_PER_DAY;

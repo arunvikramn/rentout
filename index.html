@@ -440,61 +440,79 @@ async function loadStatus() {
 
 // ── RENDER ──
 function renderStatus(d) {
-  const r = d.rent;
-  const lateFeeHtml = r.late_fee > 0 ? `
-    <div class="late-fee-row">
-      <span>late fee</span>
-      <span>+ ₹${r.late_fee.toLocaleString('en-IN')}</span>
-    </div>` : '';
+  // Rents
+  const rentsHtml = d.rents.map(r => {
+    const lateFeeHtml = r.late_fee > 0 ? `
+      <div class="late-fee-row">
+        <span>late fee</span>
+        <span>+ ₹${r.late_fee.toLocaleString('en-IN')}</span>
+      </div>` : '';
 
-  const ownerRemarksHtml = r.owner_remarks ? `
-    <div class="remarks-box" style="border-color:var(--amber-dim)">
-      <strong>Owner note</strong><br>${esc(r.owner_remarks)}
-    </div>` : '';
+    const ownerRemarksHtml = r.owner_remarks ? `
+      <div class="remarks-box" style="border-color:var(--amber-dim)">
+        <strong>Owner note</strong><br>${esc(r.owner_remarks)}
+      </div>` : '';
 
-  let rentStatus, rentBadge;
-  if (r.verified) {
-    rentStatus = 'badge-green'; rentBadge = '✓ Verified';
-  } else if (r.paid) {
-    rentStatus = 'badge-amber'; rentBadge = 'Awaiting verify';
-  } else {
-    rentStatus = 'badge-red'; rentBadge = 'Unpaid';
-  }
-
-  // Rent action block
-  let actionHtml = '';
-  if (!r.paid) {
-    actionHtml = `
-      <p class="section-label">Mark rent paid</p>
-      <div class="action-card">
-        <div class="field">
-          <label>UTR / Transaction ID *</label>
-          <input type="text" id="utr-input" placeholder="12-digit UTR or UPI ref" autocomplete="off" spellcheck="false">
-        </div>
-        <div class="field">
-          <label>Remarks (optional)</label>
-          <input type="text" id="remarks-input" placeholder="e.g. paid via NEFT">
-        </div>
-        <button class="btn btn-primary" onclick="submitRentPaid()">Mark as Paid</button>
-      </div>`;
-  } else if (r.paid && !r.verified) {
-    actionHtml = `
-      <div class="remarks-box" style="margin-top:10px">
-        <strong>UTR</strong><br>${esc(r.utr)}<br>
-        ${r.remarks ? `<strong style="margin-top:6px;display:block">Note</strong><br>${esc(r.remarks)}` : ''}
-      </div>`;
-      
-    if (isOwner) {
-      actionHtml += `
-        <button class="btn btn-success" style="margin-top:14px" onclick="verifyRentPaid()">Approve Payment</button>
-      `;
+    let rentStatus, rentBadge;
+    if (r.verified) {
+      rentStatus = 'badge-green'; rentBadge = '✓ Verified';
+    } else if (r.paid) {
+      rentStatus = 'badge-amber'; rentBadge = 'Awaiting verify';
     } else {
-      actionHtml += `
-        <p style="margin-top:14px;font-size:13px;color:var(--muted);font-family:var(--mono)">
-          Waiting for owner to verify. You'll see ✓ here once cleared.
-        </p>`;
+      rentStatus = 'badge-red'; rentBadge = 'Unpaid';
     }
-  }
+
+    // Rent action block
+    let actionHtml = '';
+    if (!r.paid) {
+      actionHtml = `
+        <div class="action-card">
+          <div class="field">
+            <label>UTR / Transaction ID *</label>
+            <input type="text" id="utr-input-${r.id}" placeholder="12-digit UTR or UPI ref" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label>Remarks (optional)</label>
+            <input type="text" id="remarks-input-${r.id}" placeholder="e.g. paid via NEFT">
+          </div>
+          <button class="btn btn-primary" onclick="submitRentPaid('${r.id}')" id="btn-rent-${r.id}">Mark as Paid</button>
+        </div>`;
+    } else if (r.paid && !r.verified) {
+      actionHtml = `
+        <div class="remarks-box" style="margin-top:10px">
+          <strong>UTR</strong><br>${esc(r.utr)}<br>
+          ${r.remarks ? `<strong style="margin-top:6px;display:block">Note</strong><br>${esc(r.remarks)}` : ''}
+        </div>`;
+        
+      if (isOwner) {
+        actionHtml += `
+          <button class="btn btn-success" style="margin-top:14px" onclick="verifyRentPaid('${r.id}')" id="btn-rent-${r.id}">Approve Payment</button>
+        `;
+      } else {
+        actionHtml += `
+          <p style="margin-top:14px;font-size:13px;color:var(--muted);font-family:var(--mono)">
+            Waiting for owner to verify. You'll see ✓ here once cleared.
+          </p>`;
+      }
+    }
+
+    return `
+      <p class="section-label">Rent — ${r.month}</p>
+      <div class="status-card">
+        <div class="status-row">
+          <div class="status-label">
+            ${esc(d.unit_name)}
+            <small>Monthly rent</small>
+          </div>
+          <span class="badge ${rentStatus}">${rentBadge}</span>
+        </div>
+        <div class="amount"><span class="currency">₹</span>${Number(r.due).toLocaleString('en-IN')}</div>
+        ${lateFeeHtml}
+        ${ownerRemarksHtml}
+      </div>
+      ${actionHtml}
+    `;
+  }).join('');
 
   // Bills
   const billsHtml = d.bills.length === 0
@@ -519,36 +537,23 @@ function renderStatus(d) {
       }).join('');
 
   document.getElementById('main-area').innerHTML = `
-    <p class="section-label">Rent — ${d.month}</p>
-    <div class="status-card">
-      <div class="status-row">
-        <div class="status-label">
-          ${esc(d.unit_name)}
-          <small>Monthly rent</small>
-        </div>
-        <span class="badge ${rentStatus}">${rentBadge}</span>
-      </div>
-      <div class="amount"><span class="currency">₹</span>${Number(r.due).toLocaleString('en-IN')}</div>
-      ${lateFeeHtml}
-      ${ownerRemarksHtml}
-    </div>
-    ${actionHtml}
-    <p class="section-label">Bills</p>
+    ${rentsHtml}
+    <p class="section-label" style="margin-top: 32px">Bills</p>
     ${billsHtml}
   `;
 }
 
 // ── SUBMIT RENT PAID ──
-async function submitRentPaid() {
-  const utr = document.getElementById('utr-input').value.trim();
-  const remarks = document.getElementById('remarks-input')?.value.trim() || '';
+async function submitRentPaid(id) {
+  const utr = document.getElementById(`utr-input-${id}`).value.trim();
+  const remarks = document.getElementById(`remarks-input-${id}`)?.value.trim() || '';
   if (!utr) { toast('Enter a UTR / transaction ID', 'err'); return; }
 
-  const btn = document.querySelector('.btn-primary');
+  const btn = document.getElementById(`btn-rent-${id}`);
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>';
 
-  const res = await api({ action: 'markPaid', unit: currentUnit, utr, remarks });
+  const res = await api({ action: 'markPaid', unit: currentUnit, id, utr, remarks });
   btn.disabled = false;
 
   if (res.success) {
@@ -561,12 +566,12 @@ async function submitRentPaid() {
 }
 
 // ── VERIFY RENT PAID ──
-async function verifyRentPaid() {
-  const btn = document.querySelector('.btn-primary');
+async function verifyRentPaid(id) {
+  const btn = document.getElementById(`btn-rent-${id}`);
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>';
 
-  const res = await api({ action: 'verify', unit: currentUnit });
+  const res = await api({ action: 'verify', unit: currentUnit, id });
   btn.disabled = false;
 
   if (res.success) {
