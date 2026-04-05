@@ -1,0 +1,10 @@
+# Google Apps Script
+.clasp.json
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project specific
+upload.bat
