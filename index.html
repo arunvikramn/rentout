@@ -396,8 +396,13 @@ async function init() {
   const u = params.get('unit');
   if (u === 'ground' || u === 'first') {
     currentUnit = u;
+  }
+
+  // Hide unit selector for tenants or if a specific unit is pre-selected
+  if (!isOwner || u) {
     document.getElementById('unit-selector').style.display = 'none';
   }
+
   updateTabs();
   await loadStatus();
 }
@@ -501,7 +506,6 @@ function renderStatus(d) {
       <div class="status-card">
         <div class="status-row">
           <div class="status-label">
-            ${esc(d.unit_name)}
             <small>Monthly rent</small>
           </div>
           <span class="badge ${rentStatus}">${rentBadge}</span>
