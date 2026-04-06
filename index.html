@@ -426,8 +426,9 @@ async function init() {
     currentUnit = u;
   }
 
-  // Hide unit selector for tenants or if a specific unit is pre-selected
-  if (!isOwner || u) {
+  // IMPORTANT: Ensure unit selector is visible for owner view to switch between units
+  // Hide only for direct tenant links (where unit is pre-selected and NOT owner)
+  if (u && !isOwner) {
     document.getElementById('unit-selector').style.display = 'none';
   }
 
