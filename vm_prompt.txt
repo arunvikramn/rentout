@@ -1,0 +1,23 @@
+Please update the `~/.continue/config.yaml` file on my VM to use `qwen2.5-coder:7b`. Use the following content:
+
+name: Local Config
+version: 1.0.0
+schema: v1
+models:
+  - name: Qwen2.5-Coder 7B
+    provider: ollama
+    model: qwen2.5-coder:7b
+    roles:
+      - chat
+      - edit
+      - apply
+  - name: Qwen2.5-Coder 7B
+    provider: ollama
+    model: qwen2.5-coder:7b
+    roles:
+      - autocomplete
+  - name: Nomic Embed
+    provider: ollama
+    model: nomic-embed-text:latest
+    roles:
+      - embed

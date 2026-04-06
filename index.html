@@ -393,7 +393,7 @@ async function init() {
   const params = new URLSearchParams(location.search);
   if (params.get('view') === 'owner' || params.get('owner') === '1') isOwner = true;
   
-  const u = params.get('unit');
+  const u = params.get('unit') || params.get('view');
   if (u === 'ground' || u === 'first') {
     currentUnit = u;
   }

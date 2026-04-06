@@ -1,122 +1,60 @@
-Goal: Ultra-simple tenant rent tracking system for 2 units using Google Sheets backend + minimal UI (or Telegram bot). No heavy features.
+Goal: Simple rent tracker for 2 units using Google Sheets + minimal UI/Telegram. Fast, low‑maintenance, free deployment.
+
 1. Scope
-* Only 2 units (renamable: Ground / First Floor)
-* Track:
-   * Monthly rent (x as per agreement) (late fee - create a rule - 100Rs every 1day after 3 days)
-   * Annual rent increase (rule-based) editable - 5% hike minimum say 1000
-   * Tenant payment marking (UTR)
-   * Electricity + water bills (auto-pulled from Gmail store in specific google drive share link with tenant) google script for pulling KWA/KSEB standard format pdf bills 
-* Tenants pay:
-   * Rent → to owner
-   * Bills → directly (only shown for reference)
+- 2 units (Ground, First Floor)
+- Track: monthly rent (incl. 100 Rs late fee after 3‑day grace), annual increase (max 5% or ₹1000), UTR payment, electricity/water bills auto‑pulled from Gmail PDFs.
+
 2. Core Requirements
 Rent Logic
-* Base rent per unit
-* Annual increase from start_date:
-   * Rule: max(% increase, flat minimum ₹1000)
-   * Example: 5% OR ₹1000 whichever higher
-* Rent should be precomputed monthly (not dynamic on UI load)
+- Base rent per unit
+- Annual increase: max(% increase, ₹1000)
+- Pre‑compute monthly rent
+
 Payment Flow
-* Tenant:
-* Enters UTR (mandatory)/ Marks rent as paid (only if UTR entered) / Remarks (optional)
-* Owner:
-   * Verifies payment (final authority) / Marks Vfd OK / Remarks (optional)
+- Tenant: enter UTR to mark paid (optional remarks)
+- Owner: verify & mark VFD OK (remarks optional)
+
 Bills
-* Source: Gmail (KSEB + KWA)
-* Format stable
-* Auto-extract:
-   * amount
-   * bill type
-   * month
-* Map to unit (consumer number is fixed)
-* Insert into sheet
-3. Data Model (Google Sheets)
-units
-* unit_id (ground/upstairs)
-* start_date
-* base_rent
-* escalation_type (% / flat)
-* escalation_value
-* last_revision_date
-ledger (main table)
-* month (YYYY-MM)
-* unit_id
-* rent_due
-* rent_paid (yes/no)
-* paid_date
-* UTR
-* verified_by_owner (yes/no)
-* expected_rent
-* actual_paid
-bills
-* month
-* unit_id
-* type (electricity/water)
-* amount
-* due_date
-* source
-* verified (yes/no)
-4. UX Options (choose one)
-Option A - Minimal Web UI
-Tenant:
-* View: (highlight pending)
-   * Rent
-   * Electricity - mark paid 
-   * Water - mark paid 
-* Action:
-   * Rent Mark paid + enter UTR 
-History not available. Only pending view
-Owner:
-* 2-row dashboard (Unit A/B)
-* Status: Paid / Pending
-* Click → verify payment
-Option B - Telegram Bot (preferred for simplicity)
-Commands:
-* /status
-* /markpaid <unit> <UTR>
-* /verify <unit>
+- Source: Gmail (KSEB/KWA) PDFs
+- Extract amount, type, month; map to unit; insert into sheets
+
+3. Data Model (Sheets)
+units: unit_id, start_date, base_rent, escalation_type, escalation_value, last_revision_date
+ledger: month, unit_id, rent_due, rent_paid, paid_date, UTR, verified_by_owner, expected_rent, actual_paid
+bills: month, unit_id, type, amount, due_date, source, verified
+
+4. UX Options
+Option A – Minimal Web UI
+- Tenant: view pending rent/electricity/water; mark paid + UTR
+- Owner: 2‑row dashboard (Unit A/B) showing Paid/Pending; click to verify
+Option B – Telegram Bot (preferred)
+- Commands: /status, /markpaid <unit> <UTR>, /verify <unit>
+
 5. Automation
-Rent Escalation
-* Monthly Apps Script:
-   * If anniversary reached:
-      * Update rent
-      * Write to ledger
-Gmail → Bills
-* Gmail label: rent-bills
-* Apps Script trigger (daily):
-   * Parse emails
-   * Extract amount/type/date
-   * Map to unit
-   * Insert into bills
+Rent Escalation: monthly Apps Script checks anniversary, updates rent & ledger
+Gmail → Bills: label “rent-bills”; daily script parses PDFs, extracts data, inserts into bills
+
 6. Backend
-* Google Sheets = database
-* Google Apps Script:
-   * Acts as API
-   * Handles:
-      * rent calculation
-      * payment updates
-      * Gmail parsing
+- Sheets = database
+- Apps Script API: rent calc, payment updates, Gmail parsing
+
 7. Constraints
-* Only 2 tenants (no scaling needed)
-* No login/auth system
-* No payment gateway
-* No accounting features
-* Must be:
-   * fast
-   * low-maintenance
-   * mobile-friendly
+- Only 2 tenants
+- No auth, payment gateway, accounting
+- Must be fast, low‑maintenance, mobile‑friendly
+
 8. Edge Cases
-* Tenant marks paid but didn’t actually pay → owner verifies
-* Rent escalation if not paid in a week (monthly after commencement) - payable same on bill 100/day 
-* Gmail format change → bills marked unverified
-* Partial payment → tracked via expected vs actual
-9. Deliverables Expected
-Claude should:
-1. Validate architecture (Sheets + Apps Script + optional Telegram)
-2. Suggest simplifications if overbuilt
-3. Identify failure points (especially Gmail parsing)
-4. Recommend best approach between Web UI vs Telegram-only
-5. Propose clean API structure (Apps Script endpoints)
-10. Key Principle
-System must answer in <5 sec: → “Did each unit pay correct rent this month?”
-Everything else is secondary. should be deployable in firebase/or cloudflare/gitthub totally free  - brainstorm no code yet. simplicity one time setup  and headche free maintanance - find any overlooked cases. googlesheets will function as the main accouting dashboard
+- Tenant marks paid but not paid → owner verifies
+- Escalation if unpaid after a week (₹100/day)
+- Gmail format change → bills unverified
+- Partial payment → track expected vs actual
+
+9. Deliverables
+- Validate architecture (Sheets + Apps Script + optional Telegram)
+- Suggest simplifications
+- Identify failure points (Gmail parsing)
+- Recommend Web UI vs Telegram‑only
+- Propose clean Apps Script API
+- Key: answer “Did each unit pay correct rent this month?” in <5 s
+
+Deployable free on Firebase/Cloudflare/GitHub Pages. Simplicity first.
