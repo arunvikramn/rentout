@@ -364,7 +364,7 @@
 <header>
   <div class="logo">Rent Portal</div>
   <div style="display:flex; gap:10px; align-items:center;">
-    <button class="btn-small" id="history-btn" style="display:none" onclick="openHistoryModal()">History</button>
+    <button class="btn-small" id="history-btn" onclick="openHistoryModal()">History</button>
     <div id="month-badge">—</div>
   </div>
 </header>
@@ -474,7 +474,8 @@ async function loadStatus() {
 // ── RENDER ──
 function renderStatus(d) {
   const historyBtn = document.getElementById('history-btn');
-  if (d.history && d.history.length > 0) {
+  // Show history button if user is owner or if there is history to show
+  if (isOwner || (d.history && d.history.length > 0)) {
     historyBtn.style.display = 'block';
   } else {
     historyBtn.style.display = 'none';
