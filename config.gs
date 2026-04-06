@@ -108,11 +108,21 @@ function getStatus(unit) {
   const activeBills = allBills.filter(r => r.paid !== 'yes' || r.month === currentM);
 
   const units = sheetData('units').find(r => String(r.unit_id) === String(unit));
+  
+  const historyLedgers = allLedgers
+    .filter(r => r.rent_paid === 'yes' && r.verified_by_owner === 'yes')
+    .sort((a, b) => String(b.month).localeCompare(String(a.month)));
 
   return {
     unit,
     unit_name: CONFIG.UNITS[unit]?.name || unit,
     month: currentM,
+    history: historyLedgers.map(r => ({
+      month: r.month,
+      paid_date: r.paid_date,
+      amount: r.rent_due,
+      utr: r.utr
+    })),
     rents: activeLedgers.map(r => ({
       id:            r.month_unit,
       month:         r.month,
