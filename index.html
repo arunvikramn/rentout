@@ -270,14 +270,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--border);
+    gap: 10px;
   }
   .history-item:last-child { border-bottom: none; }
-  .history-left { display: flex; flex-direction: column; gap: 4px; }
-  .history-date { font-family: var(--mono); font-size: 12px; color: var(--text); }
-  .history-utr { font-family: var(--mono); font-size: 10px; color: var(--muted); }
-  .history-amount { font-family: var(--mono); font-size: 14px; color: var(--text); font-weight: 500; }
+  .history-info { display: flex; align-items: baseline; gap: 8px; flex: 1; min-width: 0; }
+  .history-date { font-family: var(--mono); font-size: 11px; color: var(--text); white-space: nowrap; }
+  .history-utr { font-family: var(--mono); font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-amount { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 500; white-space: nowrap; }
 
   /* ── TOAST ── */
   #toast {
@@ -651,9 +652,9 @@ function openHistoryModal() {
   
   const listHtml = historyData.map(h => `
     <div class="history-item">
-      <div class="history-left">
-        <div class="history-date">${h.month} &bull; Paid on ${h.paid_date}</div>
-        <div class="history-utr">UTR: ${esc(h.utr)}</div>
+      <div class="history-info">
+        <span class="history-date">${fmtDate(h.paid_date)}</span>
+        <span class="history-utr">${esc(h.utr)}</span>
       </div>
       <div class="history-amount">₹${Number(h.amount).toLocaleString('en-IN')}</div>
     </div>
@@ -664,6 +665,14 @@ function openHistoryModal() {
 }
 function closeHistoryModal() {
   document.getElementById('history-modal').classList.add('hidden');
+}
+
+// ── HELPERS ──
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
 }
 
 // ── TOAST ──
